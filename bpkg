@@ -1,26 +1,22 @@
 #!/bin/bash
 
-PACOBIN=$(type -P paco)
-COLOR_ERROR='\e[1;31m'
-COLOR_NONE='\e[0m'
-
 help() {
   echo "Usage: $0 [option] [package]"
   echo
   echo "    -s, --sync     - Synchronize package database"
   echo "    -i, --install  - Install the given packages"
-  echo "    -l, --log      - List all installed packages"
+  echo "    -l, --list     - List all installed packages"
   echo "    -h, --help     - Display this help screen"
   exit
 }
 
 error() {
-  echo -e "${COLOR_ERROR}Error:${COLOR_NONE} $1"
+  echo -e "\e[1;31mError:\e[0m $1"
   exit 1
 }
 
 init() {
-  [[ $PACOBIN ]] || error "You must have 'paco' installed. Get it at http://paco.sf.net"
+  [[ "$(type -P paco)" ]] || error "You must have 'paco' installed. Get it at http://paco.sf.net"
 }
 
 read_args() {
@@ -58,7 +54,7 @@ pkg_install() {
 }
 
 pkg_list() {
-  ${PACOBIN} -a1 || error "No installed packages."
+  paco -a1 || error "No installed packages."
 }
 
 init
