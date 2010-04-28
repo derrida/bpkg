@@ -1,0 +1,70 @@
+#!/bin/bash
+
+PACOBIN=$(type -P paco)
+COLOR_ERROR='\e[1;31m'
+COLOR_NONE='\e[0m'
+
+help() {
+  echo "Usage: $0 [option] [package]"
+  echo
+  echo "    -s, --sync     - Synchronize package database"
+  echo "    -i, --install  - Install the given packages"
+  echo "    -l, --log      - List all installed packages"
+  echo "    -h, --help     - Display this help screen"
+  exit
+}
+
+error() {
+  echo -e "${COLOR_ERROR}Error:${COLOR_NONE} $1"
+  exit 1
+}
+
+init() {
+  [[ $PACOBIN ]] || error "You must have 'paco' installed. Get it at http://paco.sf.net"
+}
+
+read_args() {
+  [[ $1 ]] || help
+  packages=()
+  while [[ $1 ]]; do
+    case "$1" in
+      '-s'|'--sync')    option=sync ;;
+      '-i'|'--install') option=install ;;
+      '-l'|'--list')    option=list ;;
+      '-h'|'--help')    help ;;
+      -*)               error "Unrecognized option '$1'." ;;
+      *)                packages+=("$1") ;;
+    esac
+    shift
+  done
+
+  case "$option" in
+    sync)       remote_sync ;;
+    install)    pkg_install "${packages[@]}" ;;
+    list)       pkg_list "${packages[@]}" ;;
+    *)          help ;;
+  esac
+}
+
+remote_sync() {
+  echo "Syncing with remote server."
+}
+
+pkg_install() {
+  [[ $packages ]] || error "Must specify a package."
+  for pkg in "${packages[@]}"; do
+    echo "Installing $pkg"
+    shift
+  done
+}
+
+pkg_list() {
+  list="$(paco -a1)"
+  [[ $list ]] || error "No installed packages."
+  for pkg in $list; do
+    echo $pkg
+  done
+}
+
+init
+read_args $*
