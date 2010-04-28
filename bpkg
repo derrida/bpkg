@@ -54,12 +54,11 @@ pkg_install() {
   [[ $packages ]] || error "Must specify a package."
   for pkg in "${packages[@]}"; do
     echo "Installing $pkg"
-    shift
   done
 }
 
 pkg_list() {
-  list="$(paco -a1)"
+  list="$(${PACOBIN} -a1)"
   [[ $list ]] || error "No installed packages."
   for pkg in $list; do
     echo $pkg
@@ -67,4 +66,4 @@ pkg_list() {
 }
 
 init
-read_args $*
+read_args "$@"
