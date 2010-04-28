@@ -58,11 +58,7 @@ pkg_install() {
 }
 
 pkg_list() {
-  list="$(${PACOBIN} -a1)"
-  [[ $list ]] || error "No installed packages."
-  for pkg in $list; do
-    echo $pkg
-  done
+  ${PACOBIN} -a1 || error "No installed packages."
 }
 
 init
