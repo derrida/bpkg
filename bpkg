@@ -1,5 +1,12 @@
 #!/bin/bash
 
+init() {
+  PACO=$(type -P paco)
+  [[ "$PACO" ]] || error "Missing dependency: 'paco'."
+  [[ "$(type -P grep)" ]] || error "Missing dependency: 'grep'."
+  [[ "$(type -P git)" ]] || error "Missing dependency: 'git'."
+}
+
 help() {
   echo "Usage: $0 [option] [package]"
   echo
@@ -10,13 +17,13 @@ help() {
   exit
 }
 
+info() {
+  echo -e "\e[1;28m$1\e[0m"
+}
+
 error() {
   echo -e "\e[1;31mError:\e[0m $1"
   exit 1
-}
-
-init() {
-  [[ "$(type -P paco)" ]] || error "You must have 'paco' installed. Get it at http://paco.sf.net"
 }
 
 read_args() {
@@ -43,18 +50,25 @@ read_args() {
 }
 
 remote_sync() {
-  echo "Syncing with remote server."
+  info "Synchronizing package database with remote server."
 }
 
 pkg_install() {
   [[ $packages ]] || error "Must specify a package."
+  info "Installing packages..."
   for pkg in "${packages[@]}"; do
     echo "Installing $pkg"
   done
 }
 
 pkg_list() {
-  paco -a1 || error "No installed packages."
+  if [[ $1 ]]; then
+    info "Listing installed packages matching '$1'..."
+    paco -a1 | grep --color "$1" || error "No matches found for '$1'."
+  else
+    info "Listing all installed packages..."
+    paco -a1 || error "No installed packages."
+  fi
 }
 
 init
