@@ -79,7 +79,7 @@ pkg_install() {
   info "Installing packages..."
   for pkg in "${packages[@]}"; do
     info "Installing $pkg"
-    $(cd "${DB_ROOT}/$pkg" && cat build.sh)
+    cd "${DB_ROOT}/$pkg"; cat build.sh
   done
 }
 
