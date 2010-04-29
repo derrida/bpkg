@@ -1,10 +1,22 @@
 #!/bin/bash
 
 init() {
-  PACO=$(type -P paco)
-  [[ "$PACO" ]] || error "Missing dependency: 'paco'."
-  [[ "$(type -P grep)" ]] || error "Missing dependency: 'grep'."
-  [[ "$(type -P git)" ]] || error "Missing dependency: 'git'."
+  # Paths to resources
+  CFG_GLOBAL="/etc/bpkg.conf"
+  CFG_LOCAL="${HOME}/.bpkg.conf"
+  BIN_PACO="$(type -P paco)"
+  BIN_GIT="$(type -P git)"
+  BIN_GREP="$(type -P grep)"
+
+  # Check for required dependencies
+  [[ "$BIN_PACO" ]] || error "Missing dependency: 'paco'."
+  [[ "$BIN_GIT" ]] || error "Missing dependency: 'git'."
+  [[ "$BIN_GREP" ]] || error "Missing dependency: 'grep'."
+
+  # Source global and local configuration files
+  [[ -f "$CFG_GLOBAL" ]] && . "$CFG_GLOBAL" ||
+    error "No global configuration file '$CFG_GLOBAL'."
+  [[ -f "$CFG_LOCAL" ]] && . "$CFG_LOCAL"
 }
 
 help() {
@@ -18,11 +30,15 @@ help() {
 }
 
 info() {
-  echo -e "\e[1;28m$1\e[0m"
+  echo -e "\e[1;37m$1\e[0m"
+}
+
+warn() {
+  echo -e "\e[1;33mWarning:\e[0m $1"
 }
 
 error() {
-  echo -e "\e[1;31mError:\e[0m $1"
+  echo -e "\e[0;31mError:\e[0m $1"
   exit 1
 }
 
@@ -64,7 +80,8 @@ pkg_install() {
 pkg_list() {
   if [[ $1 ]]; then
     info "Listing installed packages matching '$1'..."
-    paco -a1 | grep --color "$1" || error "No matches found for '$1'."
+    paco -a1 | grep --color "$1" ||
+      error "No matches found for '$1'."
   else
     info "Listing all installed packages..."
     paco -a1 || error "No installed packages."
