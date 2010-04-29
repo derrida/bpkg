@@ -7,6 +7,7 @@ init() {
   BIN_PACO="$(type -P paco)"
   BIN_GIT="$(type -P git)"
   BIN_GREP="$(type -P grep)"
+  TEMP="/tmp/bpkg"
 
   # Check for required dependencies
   [[ "$BIN_PACO" ]] || error "Missing dependency: 'paco'."
@@ -17,6 +18,10 @@ init() {
   [[ -f "$CFG_GLOBAL" ]] && . "$CFG_GLOBAL" ||
     error "No global configuration file '$CFG_GLOBAL'."
   [[ -f "$CFG_LOCAL" ]] && . "$CFG_LOCAL"
+
+  # Check and create needed directories
+  [[ -d "$DB_ROOT" ]] || mkdir "$DB_ROOT"
+  [[ -d "$TEMP" ]] || mkdir "$TEMP"
 }
 
 help() {
@@ -73,7 +78,8 @@ pkg_install() {
   [[ $packages ]] || error "Must specify a package."
   info "Installing packages..."
   for pkg in "${packages[@]}"; do
-    echo "Installing $pkg"
+    info "Installing $pkg"
+    $(cd "${DB_ROOT}/$pkg" && cat build.sh)
   done
 }
 
