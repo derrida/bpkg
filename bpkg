@@ -2,7 +2,7 @@
 
 init() {
   # Paths to resources
-  CFG_GLOBAL="/etc/bpkg.conf"
+  CFG_GLOBAL="bpkg.conf"
   CFG_LOCAL="${HOME}/.bpkg.conf"
   BIN_PACO="$(type -P paco)"
   BIN_GIT="$(type -P git)"
