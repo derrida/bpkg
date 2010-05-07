@@ -80,9 +80,9 @@ pkg_install() {
   for pkg in "${packages[@]}"; do
     info "Installing $pkg..."
     (cd "${DB_ROOT}/$pkg" &&
-      . pkg.info || error "Problem with package metadata."
-      . pkg.build || error "Problem with build script."
-      pkgconfig )
+      . pkg.info || error "Problem with package's build script."
+      pkgconfig || error "Failed to configure '$pkg'."
+      pkgbuild || error "Failed to build '$pkg'.")
   done
 }
 

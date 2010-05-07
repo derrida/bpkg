@@ -5,5 +5,11 @@ source=('http://file' 'file.patch')
 
 profile_mini() {
   deps=('coreutils')
-  config='--without-x'
+  PKG_CONFIG='--without-x'
+}
+
+pkgconfig() {
+  cd vim72 &&
+  echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h &&
+  ./configure --prefix=$PKG_PREFIX $PKG_CONFIG || return 1
 }
