@@ -1,0 +1,9 @@
+name='vim'
+version=7.2
+depends=('coreutils')
+source=('http://file' 'file.patch')
+
+profile_mini() {
+  deps=('coreutils')
+  config='--without-x'
+}

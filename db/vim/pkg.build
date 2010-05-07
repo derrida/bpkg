@@ -1,0 +1,3 @@
+pkgconfig() {
+  ./configure --prefix=/usr || return 1
+}

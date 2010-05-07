@@ -78,16 +78,18 @@ pkg_install() {
   [[ $packages ]] || error "Must specify a package."
   info "Installing packages..."
   for pkg in "${packages[@]}"; do
-    info "Installing $pkg"
-    cd "${DB_ROOT}/$pkg"; cat build.sh
+    info "Installing $pkg..."
+    (cd "${DB_ROOT}/$pkg" &&
+      . pkg.info || error "Problem with package metadata."
+      . pkg.build || error "Problem with build script."
+      pkgconfig )
   done
 }
 
 pkg_list() {
   if [[ $1 ]]; then
     info "Listing installed packages matching '$1'..."
-    paco -a1 | grep --color "$1" ||
-      error "No matches found for '$1'."
+    paco -a1 | grep --color "$1" || error "No matches found for '$1'."
   else
     info "Listing all installed packages..."
     paco -a1 || error "No installed packages."
