@@ -2,7 +2,7 @@
 
 init() {
   # Paths to resources
-  CFG_GLOBAL="bpkg.conf"
+  CFG_GLOBAL="/etc/bpkg.conf"
   CFG_LOCAL="${HOME}/.bpkg.conf"
   BIN_PACO="$(type -P paco)"
   BIN_GIT="$(type -P git)"
@@ -23,6 +23,17 @@ init() {
   [[ -d "$DB_ROOT" ]] || mkdir "$DB_ROOT"
   [[ -d "$TEMP" ]] || mkdir "$TEMP"
 }
+
+pkg_list() {
+  if [[ $1 ]]; then
+    info "Listing installed packages matching '$1'..."
+    paco -a1 | grep -i --color "$1" || error "No matches found for '$1'."
+  else
+    info "Listing all installed packages..."
+    paco -a1 || error "No installed packages."
+  fi
+}
+
 
 help() {
   echo "Usage: $0 [option] [package]"
@@ -48,14 +59,14 @@ error() {
 }
 
 read_args() {
-  [[ $1 ]] || help
+  [[ $1 ]] || pkg_list 
   packages=()
   while [[ $1 ]]; do
     case "$1" in
-      '-s'|'--sync')    option=sync ;;
-      '-i'|'--install') option=install ;;
-      '-l'|'--list')    option=list ;;
-      '-h'|'--help')    help ;;
+      '-s'|'--sync'|'sync')    option=sync ;;
+      '-i'|'--install'|'install') option=install ;;
+      '-l'|'--list'|'list')    option=list ;;
+      '-h'|'--help'|'help')    help ;;
       -*)               error "Unrecognized option '$1'." ;;
       *)                packages+=("$1") ;;
     esac
@@ -84,16 +95,6 @@ pkg_install() {
       pkgconfig || error "Failed to configure '$pkg'."
       pkgbuild || error "Failed to build '$pkg'.")
   done
-}
-
-pkg_list() {
-  if [[ $1 ]]; then
-    info "Listing installed packages matching '$1'..."
-    paco -a1 | grep --color "$1" || error "No matches found for '$1'."
-  else
-    info "Listing all installed packages..."
-    paco -a1 || error "No installed packages."
-  fi
 }
 
 init
