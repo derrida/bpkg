@@ -7,7 +7,7 @@ init() {
   BIN_PACO="$(type -P paco)"
   BIN_GIT="$(type -P git)"
   BIN_GREP="$(type -P grep)"
-  TEMP="/tmp/bpkg"
+  DIR_TEMP="/tmp/bpkg"
 
   # Check for required dependencies
   [[ "$BIN_PACO" ]] || error "Missing dependency: 'paco'."
@@ -15,13 +15,15 @@ init() {
   [[ "$BIN_GREP" ]] || error "Missing dependency: 'grep'."
 
   # Source global and local configuration files
-  [[ -f "$CFG_GLOBAL" ]] && . "$CFG_GLOBAL" ||
-    error "No global configuration file '$CFG_GLOBAL'."
-  [[ -f "$CFG_LOCAL" ]] && . "$CFG_LOCAL"
+  [[ -f "$CFG_GLOBAL" ]] || error "No global configuration file '$CFG_GLOBAL'." 
+    . "$CFG_GLOBAL" || error "Error parsing '$CFG_GLOBAL'."
+  if [[ -f "$CFG_LOCAL" ]]; then
+    . "$CFG_LOCAL" || error "Error parsing '$CFG_LOCAL'."
+  fi
 
   # Check and create needed directories
-  [[ -d "$DB_ROOT" ]] || mkdir "$DB_ROOT"
-  [[ -d "$TEMP" ]] || mkdir "$TEMP"
+  [[ -d "$DIR_DB" ]] || mkdir -p "$DIR_DB"
+  [[ -d "$DIR_TEMP" ]] || mkdir -p "$DIR_TEMP"
 }
 
 pkg_list() {
@@ -67,6 +69,7 @@ read_args() {
       '-i'|'--install'|'install') option=install ;;
       '-l'|'--list'|'list')    option=list ;;
       '-h'|'--help'|'help')    help ;;
+      '--')               shift; packages+=("$@"); break ;;
       -*)               error "Unrecognized option '$1'." ;;
       *)                packages+=("$1") ;;
     esac
@@ -86,16 +89,51 @@ remote_sync() {
   info "Synchronizing package database with remote server."
 }
 
-pkg_install() {
-  [[ $packages ]] || error "Must specify a package."
-  info "Installing packages..."
-  for pkg in "${packages[@]}"; do
-    info "Installing $pkg..."
-    (cd "${DB_ROOT}/$pkg" &&
-      . pkg.info || error "Problem with package's build script."
-      pkgconfig || error "Failed to configure '$pkg'."
-      pkgbuild || error "Failed to build '$pkg'.")
+get_deps() {
+  [[ "${#missing_deps[@]}" -le 500 ]] || error "Circular dependencies detected."
+  . "${DIR_DB}/$1/pkg.info" || error "Problem with '$1' build script."
+
+  for dep in "${depends[@]}"; do
+    [[ $1 != "$dep" ]] || error "Package '$1' depends on itself."
+    if ! paco "$dep" &>/dev/null; then
+      missing_deps=("$dep" "${missing_deps[@]}")
+      get_deps "$dep"
+    fi
   done
+}
+
+pkg_install() {
+  [[ $@ ]] || error "Must specify a package."
+  for pkg in "$@"; do
+    explicit_pkgs+=("$pkg")
+    get_deps "$pkg"
+    dep_table+=("$(echo " ${missing_deps[@]}")")
+  done
+
+  print_targets
+}
+
+print_targets() {
+  targets=( $(echo "${explicit_pkgs[@]} ${dep_table[@]}" | tr ' ' '\n' | sort -u) )
+  width="$(stty size)"
+  width="${width##* }"
+  begin_text="Targets(${#targets[@]}):  "
+  indent_chars="${#begin_text}"
+  current_chars="${#begin_text}"
+
+  echo -n "$begin_text"
+  for target in "${targets[@]}"; do
+    ((current_chars+=${#target}+2))
+    if [[ $current_chars -lt $width ]]; then
+      echo -n "$target  " 
+    else
+      echo
+      printf "%${indent_chars}s" " "
+      echo -n "$target  "
+      current_chars="$(($indent_chars+=${#target}+2))"
+    fi
+  done
+  echo
 }
 
 init
